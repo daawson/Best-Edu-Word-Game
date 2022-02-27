@@ -1051,9 +1051,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f10bfc8d2956dd44b94fb7e48fca04d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentWord: 
+  previewCurrentWord: 
+  wordsData: []
+  availableWords: []
+  usedWords: []
   _wordText: {fileID: 323896806}
   _previewWordText: {fileID: 2113380052}
+  _scoreText: {fileID: 286254482}
   _timeSlider: {fileID: 1351498638}
+  cameraHeight: 0
+  cameraWidth: 0
+  edgeOffset: 1.25
   letterPrefab: {fileID: 7513506765585236534, guid: 3bb49b46b1630d146b68f6759b8affde, type: 3}
 --- !u!1 &1655867176
 GameObject:

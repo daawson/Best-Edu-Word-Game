@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.IO;
+using System.Text.RegularExpressions;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,8 +13,9 @@ public class GameManager : MonoBehaviour
 
     // GAME VARIABLES
     string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    int gameTime;
-    int gameScore;
+    float gameTime = 10000;
+    float gameMaxTime = 10000;
+    int gameScore = 0;
     int gameLives = 3;
     public string currentWord;
     public string previewCurrentWord;
@@ -50,6 +52,7 @@ public class GameManager : MonoBehaviour
         // Accesing GameManager only by GamaManager gm = GamaManager.instance;
         if (instance == null) instance = this;
 
+        // Setting up camera variables
         cameraMain = Camera.main;
         cameraHeight = 2f * cameraMain.orthographicSize;
         cameraWidth = cameraHeight * cameraMain.aspect;
@@ -58,16 +61,22 @@ public class GameManager : MonoBehaviour
         LoadWords();
 
         lettersHolder = GameObject.Find("Letters");
-        string check = "best";
-        SetupWord(check);
+        SetupWord("best");
 
     }
     void Update()
     {
-        _scoreText.text = "Score: " + gameScore;
+        gameTime--;
+        if(gameTime < 0)
+        {
+            gameLives--;
+            if (gameLives < 0) Lost();
+        }
 
-        if (Input.GetKeyDown(KeyCode.Space))
-            WonTheRound();
+        // Update the time slider
+        _timeSlider.value = gameTime / gameMaxTime;
+        // Update the score
+        _scoreText.text = "Score: " + gameScore;
     }
 
     void LoadWords()
@@ -83,7 +92,10 @@ public class GameManager : MonoBehaviour
         foreach (var word in words)
         {
             // Removing Quotes ' "" '
-            string a = word.Replace("\"", string.Empty);
+            //string a = word.Replace("\"", string.Empty);
+            //a = Regex.Replace(a, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
+
+            string a = Regex.Replace(word, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
 
             // If it has 4 or more letters add to Words List
             if (a.Length >= 4)
@@ -138,8 +150,39 @@ public class GameManager : MonoBehaviour
         {
             GameObject l = Instantiate(letterPrefab, lettersHolder.transform);
             l.transform.position = new Vector3(Random.Range(-cameraWidth / 2, cameraWidth / 2), Random.Range(-cameraHeight / 2, cameraHeight / 2), 0);
-            l.GetComponent<Letter>().SetupLetter(availableAlphabet[Random.Range(0, availableAlphabet.Length)].ToString(), true);
+            l.GetComponent<Letter>().SetupLetter(availableAlphabet[Random.Range(0, availableAlphabet.Length)].ToString(), false);
             lettersOnScreen++;
+        }
+
+
+        //Spawn Best Education Logo    = Extra Points
+        float chance = Random.Range(0f, 1f);
+        Debug.Log(chance);
+        if (chance > 0.30f)
+        {
+            GameObject l = Instantiate(letterPrefab, lettersHolder.transform);
+            l.transform.position = new Vector3(Random.Range(-cameraWidth / 2, cameraWidth / 2), Random.Range(-cameraHeight / 2, cameraHeight / 2), 0);
+            l.GetComponent<Letter>().SetupLetter("*", false);
+        }
+
+        //Spawn a timer
+        chance = Random.Range(0f, 1f);
+        Debug.Log(chance);
+        if (chance > 0.60f)
+        {
+            GameObject l = Instantiate(letterPrefab, lettersHolder.transform);
+            l.transform.position = new Vector3(Random.Range(-cameraWidth / 2, cameraWidth / 2), Random.Range(-cameraHeight / 2, cameraHeight / 2), 0);
+            l.GetComponent<Letter>().SetupLetter("#", false);
+        }
+
+        //Spawn a heart
+        chance = Random.Range(0f, 1f);
+        Debug.Log(chance);
+        if (chance > 0.90f)
+        {
+            GameObject l = Instantiate(letterPrefab, lettersHolder.transform);
+            l.transform.position = new Vector3(Random.Range(-cameraWidth / 2, cameraWidth / 2), Random.Range(-cameraHeight / 2, cameraHeight / 2), 0);
+            l.GetComponent<Letter>().SetupLetter("$", false);
         }
     }
 
@@ -148,17 +191,20 @@ public class GameManager : MonoBehaviour
     {
         // Update the arrays of available words
         usedWords.Add(currentWord.ToLower());
-        availableWords.Remove(currentWord.ToLower());
+        int index = availableWords.IndexOf(currentWord.ToLower());
+        Debug.Log(index);
+        availableWords.RemoveAt(index);        
 
         gameScore += 1000;
+        gameTime = 10000;
 
         // Randomize next word, and setup it on the screen
         string nextWord = availableWords[Random.Range(0, availableWords.Count)];
-        nextWord = nextWord.Remove(nextWord.Length - 1, 1);
+        //nextWord = nextWord.Remove(nextWord.Length - 1, 1);
         SetupWord(nextWord);
     }
 
-    void LostTheRound()
+    void Lost()
     {
 
     }
@@ -170,16 +216,14 @@ public class GameManager : MonoBehaviour
 
     void BonusClicked(string letter)
     {
-        if (letter == "*") { }         // STAR             - Extra points
-        else if (letter == "#") { }    // BEST EDU LOGO    - Extra time
-        else if (letter == "$") { }    // HEART            - Extra lives
+        if (letter == "*") { gameScore += 250; }        // BEST EDU LOGO     - Extra points
+        else if (letter == "#") { gameTime += 1000; }   // TIMER             - Extra time
+        else if (letter == "$") { gameLives += 1; }    // HEART             - Extra lives
     }
 
     // Called by a Letter's GameObject on click
     public void ClickedOnLetter(GameObject caller, string letter)
     {
-        Debug.Log(letter + " Clicked");
-
         // If the letter clicked is one of the needed letters -- never remove it if its in the wrong order, keep it on the screen
         if(caller.GetComponent<Letter>().isNeeded)
         {
@@ -193,19 +237,14 @@ public class GameManager : MonoBehaviour
 
                 if (currentWord.Equals(previewCurrentWord)) WonTheRound();                                                                      // Win the round if word is complete
                 else clickedLetterCount++;  // keep going with next letters
-
-
-            }
-            else
-            {
-                WrongLetterClicked();                                                                                                           // Wrong letter is clicked
-                Destroy(caller);
             }
         }
         else
         {
             if (caller.GetComponent<Letter>().letter == "$" || caller.GetComponent<Letter>().letter == "#" || caller.GetComponent<Letter>().letter == "*")
-                BonusClicked(caller.GetComponent<Letter>().letter);                                                                             // Player clicked on the bonus!
+                BonusClicked(caller.GetComponent<Letter>().letter);                                                                             // Player clicked on the bonus!       
+            else 
+                WrongLetterClicked();                                                                                                           // Wrong letter is clicked
 
             Destroy(caller);
         }

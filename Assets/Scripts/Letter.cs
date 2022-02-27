@@ -15,9 +15,11 @@ public class Letter : MonoBehaviour
 
 
     // Bonus object variables and UI elements
-    private Sprite bonusSprite;
     [SerializeField]
-    private Sprite starPrefab;
+    private GameObject bonusSprite;
+
+    [SerializeField]
+    private Sprite pointsPrefab;
     [SerializeField]
     private Sprite timerPrefab;
     [SerializeField]
@@ -31,15 +33,14 @@ public class Letter : MonoBehaviour
     public void SetupLetter(string _letter, bool _isNeeded)    // Letter setup
     {
 
-        if (_letter == "*") { }         // STAR             - Extra points
-        else if (_letter == "#") { }    // BEST EDU LOGO    - Extra time
-        else if (_letter == "$") { }    // HEART            - Extra lives
-        else
-        {
-            letter = _letter;
-            letterMesh.text = letter;
-        }
+        letter = _letter;
 
+        if (_letter == "*") { bonusSprite.GetComponent<SpriteRenderer>().sprite = pointsPrefab; bonusSprite.SetActive(true); }        // BEST EDU LOGO    - Extra points
+        else if (_letter == "#") { bonusSprite.GetComponent<SpriteRenderer>().sprite = timerPrefab; bonusSprite.SetActive(true); }    // TIMER            - Extra time
+        else if (_letter == "$") { bonusSprite.GetComponent<SpriteRenderer>().sprite = heartPrefab; bonusSprite.SetActive(true); }    // HEART            - Extra lives
+        else letterMesh.text = letter;
+
+        
         isNeeded = _isNeeded;
     }
 
@@ -64,7 +65,6 @@ public class Letter : MonoBehaviour
     {
         if (collision.gameObject.tag.Equals("Letter")){
             transform.position = new Vector3(Random.Range(-(gm.cameraWidth - gm.edgeOffset + 1) / 2, (gm.cameraWidth - gm.edgeOffset) / 2), Random.Range((-gm.cameraHeight - gm.edgeOffset) / 2, (gm.cameraHeight - gm.edgeOffset) / 2), 0);
-            Debug.Log("COLLISION!");
         }
     }
 
@@ -73,7 +73,6 @@ public class Letter : MonoBehaviour
         if (collision.gameObject.tag.Equals("Letter"))
         {
             transform.position = new Vector3(Random.Range(-(gm.cameraWidth - gm.edgeOffset + 1) / 2, (gm.cameraWidth - gm.edgeOffset) / 2), Random.Range((-gm.cameraHeight - gm.edgeOffset) / 2, (gm.cameraHeight - gm.edgeOffset) / 2), 0);
-            Debug.Log("COLLISION!");
         }
     }
 }
