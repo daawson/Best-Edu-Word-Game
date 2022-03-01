@@ -21,6 +21,11 @@ public class GameManager : MonoBehaviour
     public string previewCurrentWord;
     int clickedLetterCount = 0;
 
+    // Chance Modifiers
+    float pointsChanceModifier = 0.3f;
+    float timersChanceModifier = 0.4f;
+    float heartsChanceModifier = 0.5f;
+
     public List<string> wordsData = new List<string>();        // RAW WORDS
     public List<string> availableWords = new List<string>();   // SORTED FOR WORDS >= 4 LETTERS ~ 970 WORDS.
     public List<string> usedWords = new List<string>();        // WORDS THAT YOU COMPLETED
@@ -34,6 +39,8 @@ public class GameManager : MonoBehaviour
     private TMP_Text _scoreText;
     [SerializeField]
     private Slider _timeSlider;
+    [SerializeField]
+    private TMP_Text _livesText;
 
 
     // Game objects
@@ -70,13 +77,15 @@ public class GameManager : MonoBehaviour
         if(gameTime < 0)
         {
             gameLives--;
-            if (gameLives < 0) Lost();
+            LostTheRound();
         }
 
         // Update the time slider
         _timeSlider.value = gameTime / gameMaxTime;
         // Update the score
         _scoreText.text = "Score: " + gameScore;
+        // Update the lives text
+        _livesText.text = "x" + gameLives;
     }
 
     void LoadWords()
@@ -106,10 +115,11 @@ public class GameManager : MonoBehaviour
         availableWords = wordsData;
     }
 
+    // Invokes the generation of the new word
     void SetupWord(string word) 
     {
-        clickedLetterCount = 0;
-        if(lettersHolder.transform.childCount > 0)
+        clickedLetterCount = 0;                         // Resets clicked letters count
+        if(lettersHolder.transform.childCount > 0)      // Removes all letters from the screen if there are any left.
         {
             foreach (Transform child in lettersHolder.transform)
             {
@@ -120,20 +130,20 @@ public class GameManager : MonoBehaviour
         currentWord = word.ToUpper();                   // Uppercasing the letters
         _wordText.text = currentWord;                   // Updating info text
 
-        // Updating preview of clicked letters
+        // Updating preview of clicked letters " _ _ _ _ _ _ " ... etc. 
         string a = "";
         for (int i = 0; i < currentWord.Length; i++) a += "_";
         previewCurrentWord = a;
         _previewWordText.text = a;
 
-        GenerateLetters(currentWord);
+        GenerateLetters(currentWord);                   // Starts the letter generations.
     }
 
     // Generates letters on the screen
     void GenerateLetters(string word)
     {
         int lettersOnScreen = 0;
-        string availableAlphabet = alphabet;
+        string availableAlphabet = alphabet;            // SEtup alphabet to later remove letters used in the choosen by game word.
 
         // Generate initial word letter's
         for (int i = 0; i < word.Length; i++)
@@ -142,7 +152,7 @@ public class GameManager : MonoBehaviour
             l.transform.position = new Vector3(Random.Range(-cameraWidth / 2, cameraWidth / 2), Random.Range(-cameraHeight / 2, cameraHeight / 2), 0);  // Positon the letter
             l.GetComponent<Letter>().SetupLetter(word[i].ToString().ToUpper(), true);       // Setup the letter
             lettersOnScreen++;                                                              // Count the letters on the screen
-            availableAlphabet = availableAlphabet.Replace(""+word[i], string.Empty);        // Remove this letter from available random letters
+            availableAlphabet = availableAlphabet.Replace(""+word[i], string.Empty);        // Remove this letter from available letters
         }
 
         // Generate random filling letters
@@ -158,7 +168,7 @@ public class GameManager : MonoBehaviour
         //Spawn Best Education Logo    = Extra Points
         float chance = Random.Range(0f, 1f);
         Debug.Log(chance);
-        if (chance > 0.30f)
+        if (chance > pointsChanceModifier)
         {
             GameObject l = Instantiate(letterPrefab, lettersHolder.transform);
             l.transform.position = new Vector3(Random.Range(-cameraWidth / 2, cameraWidth / 2), Random.Range(-cameraHeight / 2, cameraHeight / 2), 0);
@@ -168,7 +178,7 @@ public class GameManager : MonoBehaviour
         //Spawn a timer
         chance = Random.Range(0f, 1f);
         Debug.Log(chance);
-        if (chance > 0.60f)
+        if (chance > timersChanceModifier)
         {
             GameObject l = Instantiate(letterPrefab, lettersHolder.transform);
             l.transform.position = new Vector3(Random.Range(-cameraWidth / 2, cameraWidth / 2), Random.Range(-cameraHeight / 2, cameraHeight / 2), 0);
@@ -178,7 +188,7 @@ public class GameManager : MonoBehaviour
         //Spawn a heart
         chance = Random.Range(0f, 1f);
         Debug.Log(chance);
-        if (chance > 0.90f)
+        if (chance > heartsChanceModifier)
         {
             GameObject l = Instantiate(letterPrefab, lettersHolder.transform);
             l.transform.position = new Vector3(Random.Range(-cameraWidth / 2, cameraWidth / 2), Random.Range(-cameraHeight / 2, cameraHeight / 2), 0);
@@ -189,24 +199,46 @@ public class GameManager : MonoBehaviour
 
     void WonTheRound()
     {
-        // Update the arrays of available words
+        // Update the arrays of available words, adds word to an array that holds all completed words. Next, removes it from the available pool.
         usedWords.Add(currentWord.ToLower());
         int index = availableWords.IndexOf(currentWord.ToLower());
         Debug.Log(index);
         availableWords.RemoveAt(index);        
 
-        gameScore += 1000;
-        gameTime = 10000;
+        gameScore += (int)(1000 + (gameTime/2));            // Gives the player score, currently based on static 1000 and time left/2.
+        gameTime = 10000;                                   // Resets the word timer.
 
         // Randomize next word, and setup it on the screen
         string nextWord = availableWords[Random.Range(0, availableWords.Count)];
-        //nextWord = nextWord.Remove(nextWord.Length - 1, 1);
         SetupWord(nextWord);
     }
 
-    void Lost()
+    void LostTheRound()
     {
+        // If player has even or more than 0 lives.
+        if (gameLives >= 0)
+        {
+            // Update the arrays of available words, adds word to an array that holds all completed words. Next, removes it from the available pool.
+            usedWords.Add(currentWord.ToLower());
+            int index = availableWords.IndexOf(currentWord.ToLower());
+            Debug.Log(index);
+            availableWords.RemoveAt(index);
 
+            gameTime = 10000;                           // Resets the word timer.
+
+            // Randomize next word, and setup it on the screen
+            string nextWord = availableWords[Random.Range(0, availableWords.Count)];
+            SetupWord(nextWord);
+        }
+        else
+        {
+            LostTheGame();
+        }
+    }
+
+    void LostTheGame()
+    {
+        //TO-DO: Lost game menu (restart/quit)
     }
 
     void WrongLetterClicked()
@@ -216,9 +248,9 @@ public class GameManager : MonoBehaviour
 
     void BonusClicked(string letter)
     {
-        if (letter == "*") { gameScore += 250; }        // BEST EDU LOGO     - Extra points
-        else if (letter == "#") { gameTime += 1000; }   // TIMER             - Extra time
-        else if (letter == "$") { gameLives += 1; }    // HEART             - Extra lives
+        if (letter == "*") { gameScore += 250; }        // When clicked on Best Edu Logo, give the player extra points
+        else if (letter == "#") { gameTime += 1000; }   // When clicked on a timer, give the player extra time.
+        else if (letter == "$") { gameLives += 1; }     // When clicked on a heart, give the player extra lives.
     }
 
     // Called by a Letter's GameObject on click
@@ -227,26 +259,30 @@ public class GameManager : MonoBehaviour
         // If the letter clicked is one of the needed letters -- never remove it if its in the wrong order, keep it on the screen
         if(caller.GetComponent<Letter>().isNeeded)
         {
-            // if its right letter
+            // If its right letter
             if (currentWord[clickedLetterCount] == letter[0])
             {
                 previewCurrentWord = previewCurrentWord.Remove(clickedLetterCount, 1).Insert(clickedLetterCount, letter[0].ToString());         // Update preview text
                 _previewWordText.text = previewCurrentWord;
                 Destroy(caller);                                                                                                                // Destroy clicked letter
 
+                gameScore += 2;
 
                 if (currentWord.Equals(previewCurrentWord)) WonTheRound();                                                                      // Win the round if word is complete
                 else clickedLetterCount++;  // keep going with next letters
             }
+            else WrongLetterClicked();
         }
+        // Letters clicked is one of the randomized letters.
         else
         {
+            // Bonus?
             if (caller.GetComponent<Letter>().letter == "$" || caller.GetComponent<Letter>().letter == "#" || caller.GetComponent<Letter>().letter == "*")
                 BonusClicked(caller.GetComponent<Letter>().letter);                                                                             // Player clicked on the bonus!       
             else 
                 WrongLetterClicked();                                                                                                           // Wrong letter is clicked
 
-            Destroy(caller);
+            Destroy(caller); // Destroy the letter.
         }
     }
 }

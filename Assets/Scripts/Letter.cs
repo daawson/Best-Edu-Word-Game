@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class Letter : MonoBehaviour
 {
@@ -11,7 +12,7 @@ public class Letter : MonoBehaviour
     public bool isNeeded = false;       // Is this a part of currently chosen word?
 
     [SerializeField]
-    private Text letterMesh;            // Text object
+    private TMP_Text letterText;        // Text object
 
 
     // Bonus object variables and UI elements
@@ -35,10 +36,10 @@ public class Letter : MonoBehaviour
 
         letter = _letter;
 
-        if (_letter == "*") { bonusSprite.GetComponent<SpriteRenderer>().sprite = pointsPrefab; bonusSprite.SetActive(true); }        // BEST EDU LOGO    - Extra points
-        else if (_letter == "#") { bonusSprite.GetComponent<SpriteRenderer>().sprite = timerPrefab; bonusSprite.SetActive(true); }    // TIMER            - Extra time
-        else if (_letter == "$") { bonusSprite.GetComponent<SpriteRenderer>().sprite = heartPrefab; bonusSprite.SetActive(true); }    // HEART            - Extra lives
-        else letterMesh.text = letter;
+        if (_letter == "*") { bonusSprite.GetComponent<SpriteRenderer>().sprite = pointsPrefab; bonusSprite.SetActive(true); }        // Set the sprite to Best Education Logo
+        else if (_letter == "#") { bonusSprite.GetComponent<SpriteRenderer>().sprite = timerPrefab; bonusSprite.SetActive(true); }    // Set the sprite to timer
+        else if (_letter == "$") { bonusSprite.GetComponent<SpriteRenderer>().sprite = heartPrefab; bonusSprite.SetActive(true); }    // Set the sprite to heart
+        else letterText.text = letter;
 
         
         isNeeded = _isNeeded;
@@ -51,7 +52,7 @@ public class Letter : MonoBehaviour
 
 
     /// <summary>
-    /// Update, and OnTrigger functions reposition the letter when it collides with other letter or is on the UI
+    /// Update, and OnTrigger functions reposition the letter when it collides with other letter or is under the UI elements.
     /// </summary>
     private void Update()
     {
