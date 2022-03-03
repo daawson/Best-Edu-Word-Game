@@ -18,7 +18,6 @@ public class Letter : MonoBehaviour
     // Bonus object variables and UI elements
     [SerializeField]
     private GameObject bonusSprite;
-
     [SerializeField]
     private Sprite pointsPrefab;
     [SerializeField]
@@ -28,7 +27,7 @@ public class Letter : MonoBehaviour
 
     private void Start()
     {
-        gm = GameManager.instance;
+        gm = GameManager.instance;      // Getting Game Manager instance.
     }
 
     public void SetupLetter(string _letter, bool _isNeeded)    // Letter setup

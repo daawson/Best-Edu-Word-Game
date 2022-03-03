@@ -11,17 +11,19 @@ public class GameManager : MonoBehaviour
 
     public static GameManager instance;                 // Only one GameManager per game
 
-    // GAME VARIABLES
-    string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    float gameTime = 10000;
-    float gameMaxTime = 10000;
-    int gameScore = 0;
-    int gameLives = 3;
-    public string currentWord;
-    public string previewCurrentWord;
-    int clickedLetterCount = 0;
+    // GAME VARIABLES    
+    float gameTime = 10;                                        // Time remaining in seconds.
+    float gameMaxTime = 10;                                     // Max seconds per word.
+    int gameScore = 0;                                          // Total score.
+    int gameLives = 3;                                          // Player lives
 
-    // Chance Modifiers
+    public string currentWord;                                  // Currently chosen random word.
+    public string previewCurrentWord;                           // Holds already clicked letters
+    int clickedLetterCount = 0;                                 // Helper var to count clicks.
+
+    string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";             // To generate filler letters.
+
+    // Chance Modifiers for bonuses.
     float pointsChanceModifier = 0.3f;
     float timersChanceModifier = 0.4f;
     float heartsChanceModifier = 0.5f;
@@ -45,13 +47,21 @@ public class GameManager : MonoBehaviour
 
     // Game objects
     Camera cameraMain;                                  // Camera object
-    public float cameraHeight, cameraWidth;
-    public float edgeOffset = 4f;
+    public float cameraHeight, cameraWidth;             
+    public float edgeOffset = 4f;                       // Offset from the game window edge.
 
     [SerializeField]
     private GameObject letterPrefab;                    // Letter GameObject prefab
 
     GameObject lettersHolder;                           // Empty GameObject that holds all the letters
+
+
+    // Pause menu variables
+    bool isPaused = false;
+    [SerializeField]
+    private GameObject gameUI;                          // Game UI's canvas
+    [SerializeField]
+    private GameObject pauseMenu;                       // Pause canvas
 
     void Start()
     {
@@ -59,7 +69,7 @@ public class GameManager : MonoBehaviour
         // Accesing GameManager only by GamaManager gm = GamaManager.instance;
         if (instance == null) instance = this;
 
-        // Setting up camera variables
+        // Setting up camera variables.
         cameraMain = Camera.main;
         cameraHeight = 2f * cameraMain.orthographicSize;
         cameraWidth = cameraHeight * cameraMain.aspect;
@@ -67,27 +77,40 @@ public class GameManager : MonoBehaviour
         // Format text file to array.
         LoadWords();
 
+        // Find gameObject to hold all the letters.
         lettersHolder = GameObject.Find("Letters");
-        SetupWord("best");
 
+        // Start the game.
+        SetupWord("best");
     }
     void Update()
     {
-        gameTime--;
-        if(gameTime < 0)
+        if (!isPaused)
         {
-            gameLives--;
-            LostTheRound();
+            gameTime -= Time.deltaTime;                             //Time remaining
+                                                                    // No time?
+            if (gameTime < 0)
+            {
+                // Subtract lives, and check in to next round.
+                gameLives--;
+                LostTheRound();
+            }
+
+
+            // Update the time slider
+            _timeSlider.value = gameTime / gameMaxTime;
+            // Update the score
+            _scoreText.text = "Score: " + gameScore;
+            // Update the lives text
+            _livesText.text = "x" + gameLives;
         }
 
-        // Update the time slider
-        _timeSlider.value = gameTime / gameMaxTime;
-        // Update the score
-        _scoreText.text = "Score: " + gameScore;
-        // Update the lives text
-        _livesText.text = "x" + gameLives;
+
+        // Pause/UnPause
+        if (Input.GetKeyDown(KeyCode.Escape)) SwitchPauseState();
     }
 
+    #region #Loading words, setting up the game
     void LoadWords()
     {
         // Load and prepare words array
@@ -167,7 +190,6 @@ public class GameManager : MonoBehaviour
 
         //Spawn Best Education Logo    = Extra Points
         float chance = Random.Range(0f, 1f);
-        Debug.Log(chance);
         if (chance > pointsChanceModifier)
         {
             GameObject l = Instantiate(letterPrefab, lettersHolder.transform);
@@ -177,7 +199,6 @@ public class GameManager : MonoBehaviour
 
         //Spawn a timer
         chance = Random.Range(0f, 1f);
-        Debug.Log(chance);
         if (chance > timersChanceModifier)
         {
             GameObject l = Instantiate(letterPrefab, lettersHolder.transform);
@@ -187,26 +208,25 @@ public class GameManager : MonoBehaviour
 
         //Spawn a heart
         chance = Random.Range(0f, 1f);
-        Debug.Log(chance);
-        if (chance > heartsChanceModifier)
+        if (chance > heartsChanceModifier && gameLives != 3)
         {
             GameObject l = Instantiate(letterPrefab, lettersHolder.transform);
             l.transform.position = new Vector3(Random.Range(-cameraWidth / 2, cameraWidth / 2), Random.Range(-cameraHeight / 2, cameraHeight / 2), 0);
             l.GetComponent<Letter>().SetupLetter("$", false);
         }
     }
+	#endregion
 
-
-    void WonTheRound()
+	#region #Rounds Management Behaviours
+	void WonTheRound()
     {
         // Update the arrays of available words, adds word to an array that holds all completed words. Next, removes it from the available pool.
         usedWords.Add(currentWord.ToLower());
         int index = availableWords.IndexOf(currentWord.ToLower());
-        Debug.Log(index);
         availableWords.RemoveAt(index);        
 
         gameScore += (int)(1000 + (gameTime/2));            // Gives the player score, currently based on static 1000 and time left/2.
-        gameTime = 10000;                                   // Resets the word timer.
+        gameTime = 10;                                   // Resets the word timer.
 
         // Randomize next word, and setup it on the screen
         string nextWord = availableWords[Random.Range(0, availableWords.Count)];
@@ -221,10 +241,9 @@ public class GameManager : MonoBehaviour
             // Update the arrays of available words, adds word to an array that holds all completed words. Next, removes it from the available pool.
             usedWords.Add(currentWord.ToLower());
             int index = availableWords.IndexOf(currentWord.ToLower());
-            Debug.Log(index);
             availableWords.RemoveAt(index);
 
-            gameTime = 10000;                           // Resets the word timer.
+            gameTime = 10;                           // Resets the word timer.
 
             // Randomize next word, and setup it on the screen
             string nextWord = availableWords[Random.Range(0, availableWords.Count)];
@@ -240,8 +259,10 @@ public class GameManager : MonoBehaviour
     {
         //TO-DO: Lost game menu (restart/quit)
     }
+	#endregion
 
-    void WrongLetterClicked()
+	#region #On Letters Click
+	void WrongLetterClicked()
     {
         gameLives--;
     }
@@ -249,7 +270,7 @@ public class GameManager : MonoBehaviour
     void BonusClicked(string letter)
     {
         if (letter == "*") { gameScore += 250; }        // When clicked on Best Edu Logo, give the player extra points
-        else if (letter == "#") { gameTime += 1000; }   // When clicked on a timer, give the player extra time.
+        else if (letter == "#") { gameTime += 2; }   // When clicked on a timer, give the player 2 seconds extra time.
         else if (letter == "$") { gameLives += 1; }     // When clicked on a heart, give the player extra lives.
     }
 
@@ -285,4 +306,37 @@ public class GameManager : MonoBehaviour
             Destroy(caller); // Destroy the letter.
         }
     }
+
+    #endregion
+
+    #region #Pause Behaviours
+
+    // Switches between paused and unpaused
+    public void SwitchPauseState()
+    {
+        if (!isPaused)
+        {
+            isPaused = true;
+            //Time.timeScale = 0;                                     // Pauses all actions.
+            gameUI.SetActive(false);                                // Disable inGame UI's
+            lettersHolder.SetActive(false);                         // Hide letters so player cant see them when paused.
+            pauseMenu.SetActive(true);                              // Show the pause menu.
+        }
+        else
+        {
+            isPaused = false;
+            //Time.timeScale = 1;
+            pauseMenu.SetActive(false);
+            gameUI.SetActive(true);
+            lettersHolder.SetActive(true);
+        }
+
+    }
+
+
+    public void QuitGame()
+    {
+        Application.Quit();
+    }
+    #endregion
 }
