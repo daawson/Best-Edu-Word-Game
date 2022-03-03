@@ -2602,7 +2602,7 @@ GameObject:
   - component: {fileID: 1438587847}
   - component: {fileID: 1438587846}
   m_Layer: 5
-  m_Name: Button
+  m_Name: PauseButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2624,10 +2624,10 @@ RectTransform:
   m_Father: {fileID: 193274219}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 1}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -210.5, y: -70}
-  m_SizeDelta: {x: 24.2079, y: 24.2079}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 345.5, y: -70}
+  m_SizeDelta: {x: 24.207886, y: 24.2079}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1438587846
 MonoBehaviour:
