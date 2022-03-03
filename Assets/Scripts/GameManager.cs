@@ -63,6 +63,17 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private GameObject pauseMenu;                       // Pause canvas
 
+
+    // End menu variables
+    [SerializeField]
+    private GameObject endMenu;
+    [SerializeField]
+    private TMP_Text endMenuScore;
+    [SerializeField]
+    private TMP_Text endMenuStatistics;
+    
+    int completedWords, failedWords, extraPointsGained, extraLivesGained, extraTimeGained;   // End result extra data
+
     void Start()
     {
         // Make instance, so that GameManager will be accesible outside this class and to not accidentaly make another instance of GameManager.
@@ -223,10 +234,12 @@ public class GameManager : MonoBehaviour
         // Update the arrays of available words, adds word to an array that holds all completed words. Next, removes it from the available pool.
         usedWords.Add(currentWord.ToLower());
         int index = availableWords.IndexOf(currentWord.ToLower());
-        availableWords.RemoveAt(index);        
+        availableWords.RemoveAt(index);
+
+        completedWords++;                                   // End game statistic, completed words++
 
         gameScore += (int)(1000 + (gameTime/2));            // Gives the player score, currently based on static 1000 and time left/2.
-        gameTime = 10;                                   // Resets the word timer.
+        gameTime = 10;                                      // Resets the word timer.
 
         // Randomize next word, and setup it on the screen
         string nextWord = availableWords[Random.Range(0, availableWords.Count)];
@@ -243,6 +256,7 @@ public class GameManager : MonoBehaviour
             int index = availableWords.IndexOf(currentWord.ToLower());
             availableWords.RemoveAt(index);
 
+            failedWords++;
             gameTime = 10;                           // Resets the word timer.
 
             // Randomize next word, and setup it on the screen
@@ -257,21 +271,27 @@ public class GameManager : MonoBehaviour
 
     void LostTheGame()
     {
-        //TO-DO: Lost game menu (restart/quit)
+        ShowEndScreen();
     }
-	#endregion
+    #endregion
 
-	#region #On Letters Click
-	void WrongLetterClicked()
+    #region #On Letters Click
+    void WrongLetterClicked()
     {
         gameLives--;
+        // If player has less than 0 lives.
+        if (gameLives < 0)
+        {
+            // You lost :(
+            LostTheGame();
+        }
     }
 
     void BonusClicked(string letter)
     {
-        if (letter == "*") { gameScore += 250; }        // When clicked on Best Edu Logo, give the player extra points
-        else if (letter == "#") { gameTime += 2; }   // When clicked on a timer, give the player 2 seconds extra time.
-        else if (letter == "$") { gameLives += 1; }     // When clicked on a heart, give the player extra lives.
+        if (letter == "*") { gameScore += 250; extraPointsGained += 250; }        // When clicked on Best Edu Logo, give the player extra points
+        else if (letter == "#") { gameTime += 2; extraTimeGained += 2; }   // When clicked on a timer, give the player 2 seconds extra time.
+        else if (letter == "$") { gameLives += 1; extraLivesGained += 1; }     // When clicked on a heart, give the player extra lives.
     }
 
     // Called by a Letter's GameObject on click
@@ -317,7 +337,6 @@ public class GameManager : MonoBehaviour
         if (!isPaused)
         {
             isPaused = true;
-            //Time.timeScale = 0;                                     // Pauses all actions.
             gameUI.SetActive(false);                                // Disable inGame UI's
             lettersHolder.SetActive(false);                         // Hide letters so player cant see them when paused.
             pauseMenu.SetActive(true);                              // Show the pause menu.
@@ -325,7 +344,6 @@ public class GameManager : MonoBehaviour
         else
         {
             isPaused = false;
-            //Time.timeScale = 1;
             pauseMenu.SetActive(false);
             gameUI.SetActive(true);
             lettersHolder.SetActive(true);
@@ -338,5 +356,75 @@ public class GameManager : MonoBehaviour
     {
         Application.Quit();
     }
+    #endregion
+
+    #region #Endgame Behaviours
+
+    // Show the player the end game screen
+    public void ShowEndScreen()
+    {
+        // Pause and disable all UI's
+        isPaused = true;
+        gameUI.SetActive(false);
+        lettersHolder.SetActive(false);
+        pauseMenu.SetActive(false);
+
+        // Format the end game statistics.
+        endMenuScore.text = "Your score was: " + gameScore + "!";
+        string endStatisticsFormat = "Completed words:\t\t\t" + completedWords + "\n" +
+            "Failed words:\t\t\t" + failedWords + "\n" +
+            "Extra points gained:\t\t" + extraPointsGained + "\n" +
+            "Extra time gained:\t\t" + extraTimeGained + "s\n" +
+            "Extra lives gained:\t\t" + extraLivesGained + "x\n" +
+            "Words:\n";
+
+        // If player got at least one word, add the words to the end of the string
+        if (usedWords.Count > 0)
+        {
+            // Loop the used words and add to the string
+            foreach (string word in usedWords)
+            {
+                endStatisticsFormat += word + ", ";
+            }
+        }
+        endMenuStatistics.text = endStatisticsFormat;
+
+        // Show end game stats;
+        endMenu.SetActive(true);
+    }
+
+    public void RestartTheGame()
+    {
+
+        // Restart the words array
+        availableWords = wordsData;
+
+        // Clear used words array
+        usedWords.Clear();
+
+        // Hide End Game UI's
+        endMenu.SetActive(false);
+        // Show UI's and unpause the game.
+        isPaused = false;
+        gameUI.SetActive(true);
+        lettersHolder.SetActive(true);
+        pauseMenu.SetActive(false);
+
+        // Restart the statistics
+        completedWords = 0;
+        failedWords = 0;
+        extraLivesGained = 0;
+        extraPointsGained = 0;
+        extraTimeGained = 0;
+        
+        // Restart the timer, health and score
+        gameTime = 10;
+        gameLives = 3;
+        gameScore = 0;
+
+        // Setup the screen
+        SetupWord("best");
+    }
+
     #endregion
 }
