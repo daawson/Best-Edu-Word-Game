@@ -107,7 +107,6 @@ public class GameManager : MonoBehaviour
                 LostTheRound();
             }
 
-
             // Update the time slider
             _timeSlider.value = gameTime / gameMaxTime;
             // Update the score
@@ -146,7 +145,7 @@ public class GameManager : MonoBehaviour
                 wordsData.Add(a);
             }
         }
-        availableWords = wordsData;
+        availableWords = new List<string>(wordsData);
     }
 
     // Invokes the generation of the new word
@@ -265,6 +264,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
+            failedWords++;
             LostTheGame();
         }
     }
@@ -397,7 +397,7 @@ public class GameManager : MonoBehaviour
     {
 
         // Restart the words array
-        availableWords = wordsData;
+        availableWords = new List<string>(wordsData);
 
         // Clear used words array
         usedWords.Clear();
