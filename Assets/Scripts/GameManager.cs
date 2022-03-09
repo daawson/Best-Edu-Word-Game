@@ -17,6 +17,7 @@ public class GameManager : MonoBehaviour
     int gameScore = 0;                                          // Total score.
     int gameLives = 3;                                          // Player lives
 
+    public TextAsset wordList;                                  // Text file holding all the words.
     public string currentWord;                                  // Currently chosen random word.
     public string previewCurrentWord;                           // Holds already clicked letters
     int clickedLetterCount = 0;                                 // Helper var to count clicks.
@@ -124,11 +125,8 @@ public class GameManager : MonoBehaviour
     void LoadWords()
     {
         // Load and prepare words array
-        string path = "Assets/words.txt";
-        StreamReader reader = new StreamReader(path);
-        string words_preformat = reader.ReadToEnd();
-        reader.Close();
-
+        string words_preformat = wordList.text;
+        
         // Formating the words, and adding it to Words List
         string[] words = words_preformat.Split('\n');
         foreach (var word in words)

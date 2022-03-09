@@ -55,7 +55,7 @@ public class Letter : MonoBehaviour
     /// </summary>
     private void Update()
     {
-        if(transform.position.y > 2f || transform.position.y < -3f || transform.position.x > 8f || transform.position.x < -7.9f)
+        if(transform.position.y > 2f || transform.position.y < -3f || transform.position.x > 8f || transform.position.x < -7.9f) // If position is somewhere on the UI
         {
             transform.position = new Vector3(Random.Range(-(gm.cameraWidth - gm.edgeOffset + 1) / 2, (gm.cameraWidth - gm.edgeOffset) / 2), Random.Range((-gm.cameraHeight - gm.edgeOffset) / 2, (gm.cameraHeight - gm.edgeOffset) / 2), 0);
         }
