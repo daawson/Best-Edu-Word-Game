@@ -17,6 +17,12 @@ public class GameManager : MonoBehaviour
     int gameScore = 0;                                          // Total score.
     int gameLives = 3;                                          // Player lives
 
+    // Difficulty variables / more time on long words
+    float basicTime = 10;
+    float difficultyHardMultiplier = 2f;
+    float difficultyMediumMultiplier = 1.5f;
+
+    // Words variables
     public TextAsset wordList;                                  // Text file holding all the words.
     public string currentWord;                                  // Currently chosen random word.
     public string previewCurrentWord;                           // Holds already clicked letters
@@ -26,11 +32,11 @@ public class GameManager : MonoBehaviour
 
     // Chance Modifiers for bonuses.
     float pointsChanceModifier = 0.3f;
-    float timersChanceModifier = 0.4f;
+    float timersChanceModifier = 0.05f;
     float heartsChanceModifier = 0.5f;
 
     public List<string> wordsData = new List<string>();        // RAW WORDS
-    public List<string> availableWords = new List<string>();   // SORTED FOR WORDS >= 4 LETTERS ~ 970 WORDS.
+    public List<string> availableWords = new List<string>();   // SORTED FOR WORDS >= 4 LETTERS ~ 870 WORDS.
     public List<string> usedWords = new List<string>();        // WORDS THAT YOU COMPLETED
 
     // UI GAMEOBJECTS
@@ -66,6 +72,7 @@ public class GameManager : MonoBehaviour
 
 
     // End menu variables
+    bool hasEndedTheGame = false;
     [SerializeField]
     private GameObject endMenu;
     [SerializeField]
@@ -92,8 +99,13 @@ public class GameManager : MonoBehaviour
         // Find gameObject to hold all the letters.
         lettersHolder = GameObject.Find("Letters");
 
-        // Start the game.
-        SetupWord("best");
+        // Start the game with a random word with length of 4 letters.
+        string startWord = availableWords[Random.Range(0, availableWords.Count)];
+        while(startWord.Length != 4)
+        {
+            startWord = availableWords[Random.Range(0, availableWords.Count)];
+        }
+        SetupWord(startWord);
     }
     void Update()
     {
@@ -117,8 +129,9 @@ public class GameManager : MonoBehaviour
         }
 
 
-        // Pause/UnPause
-        if (Input.GetKeyDown(KeyCode.Escape)) SwitchPauseState();
+        // Pause/UnPause if player pressed escape. 
+        // Also check if player doesn't see statistics screen at this moment
+        if (Input.GetKeyDown(KeyCode.Escape) && !hasEndedTheGame) SwitchPauseState();
     }
 
     #region #Loading words, setting up the game
@@ -131,10 +144,6 @@ public class GameManager : MonoBehaviour
         string[] words = words_preformat.Split('\n');
         foreach (var word in words)
         {
-            // Removing Quotes ' "" '
-            //string a = word.Replace("\"", string.Empty);
-            //a = Regex.Replace(a, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
-
             string a = Regex.Replace(word, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
 
             // If it has 4 or more letters add to Words List
@@ -166,6 +175,24 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < currentWord.Length; i++) a += "_";
         previewCurrentWord = a;
         _previewWordText.text = a;
+
+
+        // Dificulty checkup, the longer the word the more time you get.
+        if(currentWord.Length < 6) 
+        { 
+            gameTime = basicTime;
+            gameMaxTime = basicTime;
+        }
+        else if(currentWord.Length >= 6)
+        {
+            gameTime = basicTime * difficultyMediumMultiplier;           
+            gameMaxTime = basicTime * difficultyMediumMultiplier;
+        }
+        else if(currentWord.Length >= 8)
+        {
+            gameTime = basicTime * difficultyHardMultiplier;
+            gameMaxTime = basicTime * difficultyHardMultiplier;
+        }
 
         GenerateLetters(currentWord);                   // Starts the letter generations.
     }
@@ -236,7 +263,7 @@ public class GameManager : MonoBehaviour
         completedWords++;                                   // End game statistic, completed words++
 
         gameScore += (int)(1000 + (gameTime/2));            // Gives the player score, currently based on static 1000 and time left/2.
-        gameTime = 10;                                      // Resets the word timer.
+        //gameTime = 10;                                      // Resets the word timer.
 
         // Randomize next word, and setup it on the screen
         string nextWord = availableWords[Random.Range(0, availableWords.Count)];
@@ -253,8 +280,8 @@ public class GameManager : MonoBehaviour
             int index = availableWords.IndexOf(currentWord.ToLower());
             availableWords.RemoveAt(index);
 
-            failedWords++;
-            gameTime = 10;                           // Resets the word timer.
+            failedWords++;                           // End game statistic, failed words++
+            //gameTime = 10;                           // Resets the word timer.
 
             // Randomize next word, and setup it on the screen
             string nextWord = availableWords[Random.Range(0, availableWords.Count)];
@@ -262,13 +289,16 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            failedWords++;
+
+            failedWords++;                          // End game statistic, failed words++
+            usedWords.Add(currentWord.ToLower());
             LostTheGame();
         }
     }
 
     void LostTheGame()
     {
+        hasEndedTheGame = true;
         ShowEndScreen();
     }
     #endregion
@@ -281,7 +311,7 @@ public class GameManager : MonoBehaviour
         if (gameLives < 0)
         {
             // You lost :(
-            LostTheGame();
+            LostTheRound();
         }
     }
 
@@ -393,6 +423,8 @@ public class GameManager : MonoBehaviour
 
     public void RestartTheGame()
     {
+        // Reversing ending check
+        hasEndedTheGame = false;
 
         // Restart the words array
         availableWords = new List<string>(wordsData);
