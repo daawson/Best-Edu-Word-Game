@@ -2766,6 +2766,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f10bfc8d2956dd44b94fb7e48fca04d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  wordList: {fileID: 4900000, guid: 047787b800c40b04d945886dc31a96c9, type: 3}
   currentWord: 
   previewCurrentWord: 
   wordsData: []
